@@ -45,7 +45,7 @@ func InsertUser(c echo.Context) error {
 		return err
 	}
 
-	sess.InsertInto(tablename).Columns("id", "email", "first_name", "last_name").Values(u.ID, u.Email, u.Firstname, u.Lastname).Exec()
+	sess.InsertInto("user").Columns("id", "email", "first_name", "last_name").Values(u.ID, u.Email, u.Firstname, u.Lastname).Exec()
 
 	return c.NoContent(http.StatusOK)
 }
