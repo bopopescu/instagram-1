@@ -1,22 +1,30 @@
 package main
 
 import (
-    "github.com/labstack/echo"
-    "github.com/labstack/echo/middleware"
-    "./handler"
+	"fmt"
+	"instagram/handler"
+
+	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
+	"github.com/spf13/viper"
+
+	_ "github.com/go-sql-driver/mysql"
+	//"github.com/gocraft/dbr/dialect"
+	//"github.com/labstack/echo/cookbook/twitter/model"
 )
 
 func main() {
-    // Echoのインスタンス作る
-    e := echo.New()
+	e := echo.New()
+	// Middleware
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
 
-    // 全てのリクエストで差し込みたいミドルウェア（ログとか）はここ
-    e.Use(middleware.Logger())
-    e.Use(middleware.Recover())
+	// Routes
+	e.GET("/users", handler.SelectUsers)
+	//e.POST("/users", InsertUser)
 
-    // ルーティング
-    e.GET("/hello", handler.MainPage())
-
-    // サーバー起動
-    e.Start(":1323")    //ポート番号指定してね
+	// Start server
+	viper.SetDefault("http.port", 1323)
+	port := fmt.Sprintf(":%d", viper.GetInt("http.port"))
+	e.Logger.Fatal(e.Start(port))
 }
