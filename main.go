@@ -21,8 +21,11 @@ func main() {
 
 	// Routes
 	e.GET("/users", handler.SelectUsers)
+	e.GET("/timeline/:id/:date", handler.GetTimeline)
+
 	//e.POST("/users", InsertUser)
 
+	//fmt.Println(handler.GetTimeline)
 	// Start server
 	viper.SetDefault("http.port", 1323)
 	port := fmt.Sprintf(":%d", viper.GetInt("http.port"))
