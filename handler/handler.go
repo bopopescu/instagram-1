@@ -10,6 +10,7 @@ import (
 	"github.com/labstack/echo"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gocraft/dbr"
+	"time"
 )
 
 var (
@@ -46,32 +47,42 @@ func GetTimeline(c echo.Context) error {
 	var id int64
 	param := c.Param("id")
 	date := c.Param("date")
+	fmt.Println("date", date)
 	id, err = strconv.ParseInt(param, 0, 64)
 
-	//var u []model.UserResponse
-	//_, err = sess.Select("*").From("user").Where("user_id = ?",id).Load(&u)
-
 	var timeline []model.TimelineResponse
-	count, err := sess.Select("m.*").From(dbr.I("follow_list").As("f")).
-		Join(dbr.I("media").As("m"), "f.user_id = m.user_id").
-		Where("f.my_id = ?", id).
-		OrderDir("m.created_time", false).
-		Limit(10).Load(&timeline)
 
-	if count == 0 {
-		return c.JSON(http.StatusOK, "表示するタイムラインがありません")
+	if date != "" {
+		count, _ := sess.Select("m.*").From(dbr.I("follow_list").As("f")).
+			Join(dbr.I("media").As("m"), "f.user_id = m.user_id").
+			Where("f.my_id = ? AND m.created_time < ?", id, date).
+			OrderDir("m.created_time", false).
+			Limit(10).Load(&timeline)
+		fmt.Println("timeline", timeline)
+		if count == 0 {
+			return c.JSON(http.StatusOK, "表示するタイムラインがありません")
+		}
+
+	} else {
+		count, _ := sess.Select("m.*").From(dbr.I("follow_list").As("f")).
+			Join(dbr.I("media").As("m"), "f.user_id = m.user_id").
+			Where("f.my_id = ?", id).
+			OrderDir("m.created_time", false).
+			Limit(10).Load(&timeline)
+		if count == 0 {
+			return c.JSON(http.StatusOK, "表示するタイムラインがありません")
+		}
 	}
-
 	for key, value := range timeline {
 		var user []model.UserResponse
 		var likes []model.LikesResponse
 		var likeCount = 0
 		var isLiked = 0
 
-		_, err = sess.Select("u.*").From(dbr.I("media").As("m")).
-			Join(dbr.I("user").As("u"), "u.user_id = m.user_id").Where("u.user_id = ?", value.UserID).Load(&user)
+		_, err = sess.Select("u.*").From(dbr.I("user").As("u")).
+			Join(dbr.I("media").As("m"), "u.user_id = m.user_id").Where("u.user_id = ? AND m.media_id = ?", value.UserID, value.MediaID).Load(&user)
 
-		value.User = user
+
 
 		likeCount, err = sess.Select("*").From(dbr.I("media").As("m")).
 			Join(dbr.I("like").As("l"), "l.media_id = m.media_id").Where("l.media_id = ?", value.MediaID).Load(&likes)
@@ -81,17 +92,15 @@ func GetTimeline(c echo.Context) error {
 
 
 		value.LikeCounts = likeCount
-
+		value.User = user
+		fmt.Println("user", time.Now())
 		if isLiked > 0 {
 			value.IsLiked = true
 		}
-
-		fmt.Println("count", isLiked)
-		fmt.Println("count", isLiked)
-		fmt.Println("like", value)
 		timeline[key] = value
 
 	}
+	fmt.Println("timeline", timeline)
 	//"u.full_name","u.username","u.profile_picture" Where("u.user_id = ?", id)
 	if err != nil {
 		fmt.Println(err.Error())
