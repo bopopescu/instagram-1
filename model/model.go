@@ -16,6 +16,34 @@ type (
 		Token          string    `db:"token"`
 	}
 
+	UserResponse struct {
+		UserID         int64     `json:"id"`
+		FullName       string    `json:"full_name"`
+		UserName       string    `json:"username"`
+		Bio            string    `json:"bio"`
+		Mailaddress    string    `json:"mailaddress"`
+		ProfilePicture string    `json:"profile_picture"`
+		CreatedTime    string 	 `json:"created_time"`
+		PrivateFlg     int64     `json:"private_flg"`
+		Password          string    `json:"password"`
+	}
+
+	TimelineResponse struct {
+		MediaID     int64	`json:"media_id"`
+		UserID      int64	`json:"user_id"`
+		CreatedTime string	`json:"created_time"`
+		Picture     string	`json:"img_path"`
+		Body        string	`json:"caption"`
+		LikeCount int64 `json:"like_count"`
+		User []UserResponse `json:"user"`
+		LikeCounts int `json:"like_counts"`
+		IsLiked bool `json:"is_liked"`
+	}
+
+	LikesResponse struct {
+		Counts int `json:"counts"`
+	}
+
 	Userinfo struct {
 		ID        int    `db:"id"`
 		Email     string `db:"email"`
@@ -32,6 +60,7 @@ type (
 
 	ResponseData struct {
 		//User  []userinfo `json:"users"`
-		Users []User `json:"user"`
+		Users []UserResponse `json:"user"`
+		Timeline []TimelineResponse `json:"timeline"`
 	}
 )

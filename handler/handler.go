@@ -5,10 +5,12 @@ import (
 	"instagram/db"
 	"instagram/model"
 	"net/http"
+	"strconv"
 
 	"github.com/labstack/echo"
-	//"github.com/gocraft/dbr"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/gocraft/dbr"
+	"time"
 )
 
 var (
@@ -23,20 +25,90 @@ var (
 
 func SelectUsers(c echo.Context) error {
 
-        if err != nil {
-            panic(fmt.Errorf("DB connection error: %s \n", err))
-        }
+	if err != nil {
+		panic(fmt.Errorf("DB connection error: %s \n", err))
+	}
 
-	var u []model.User
+	var u []model.UserResponse
 	_, err = sess.Select("*").From("user").Load(&u)
 	if err != nil {
 		fmt.Println(err.Error())
 		return c.JSON(http.StatusOK, err.Error())
 	} else {
-		response := new(model.ResponseData)
-		response.Users = u
-		return c.JSON(http.StatusOK, response)
+		return c.JSON(http.StatusOK, u)
 	}
+}
+
+func GetTimeline(c echo.Context) error {
+
+	if err != nil {
+		panic(fmt.Errorf("DB connection error: %s \n", err))
+	}
+	var id int64
+	param := c.Param("id")
+	date := c.Param("date")
+	fmt.Println("date", date)
+	id, err = strconv.ParseInt(param, 0, 64)
+
+	var timeline []model.TimelineResponse
+
+	if date != "" {
+		count, _ := sess.Select("m.*").From(dbr.I("follow_list").As("f")).
+			Join(dbr.I("media").As("m"), "f.user_id = m.user_id").
+			Where("f.my_id = ? AND m.created_time < ?", id, date).
+			OrderDir("m.created_time", false).
+			Limit(10).Load(&timeline)
+		fmt.Println("timeline", timeline)
+		if count == 0 {
+			return c.JSON(http.StatusOK, "表示するタイムラインがありません")
+		}
+
+	} else {
+		count, _ := sess.Select("m.*").From(dbr.I("follow_list").As("f")).
+			Join(dbr.I("media").As("m"), "f.user_id = m.user_id").
+			Where("f.my_id = ?", id).
+			OrderDir("m.created_time", false).
+			Limit(10).Load(&timeline)
+		if count == 0 {
+			return c.JSON(http.StatusOK, "表示するタイムラインがありません")
+		}
+	}
+	for key, value := range timeline {
+		var user []model.UserResponse
+		var likes []model.LikesResponse
+		var likeCount = 0
+		var isLiked = 0
+
+		_, err = sess.Select("u.*").From(dbr.I("user").As("u")).
+			Join(dbr.I("media").As("m"), "u.user_id = m.user_id").Where("u.user_id = ? AND m.media_id = ?", value.UserID, value.MediaID).Load(&user)
+
+
+
+		likeCount, err = sess.Select("*").From(dbr.I("media").As("m")).
+			Join(dbr.I("like").As("l"), "l.media_id = m.media_id").Where("l.media_id = ?", value.MediaID).Load(&likes)
+
+		isLiked, err = sess.Select("*").From(dbr.I("media").As("m")).
+			Join(dbr.I("like").As("l"), "l.media_id = m.media_id").Where("l.media_id = ? AND l.user_id = ?", value.MediaID, id).Load(&likes)
+
+
+		value.LikeCounts = likeCount
+		value.User = user
+		fmt.Println("user", time.Now())
+		if isLiked > 0 {
+			value.IsLiked = true
+		}
+		timeline[key] = value
+
+	}
+	fmt.Println("timeline", timeline)
+	//"u.full_name","u.username","u.profile_picture" Where("u.user_id = ?", id)
+	if err != nil {
+		fmt.Println(err.Error())
+		return c.JSON(http.StatusOK, err.Error())
+	} else {
+		return c.JSON(http.StatusOK, timeline)
+	}
+
 }
 
 func InsertUser(c echo.Context) error {
