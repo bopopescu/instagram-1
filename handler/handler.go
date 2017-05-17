@@ -22,6 +22,8 @@ var (
 // Handlers
 //----------
 
+//	Get
+
 func GetUsers(c echo.Context) error {
 
 	if err != nil {
@@ -246,13 +248,30 @@ func GetUserMedia(c echo.Context) error {
 	}
 }
 
-func InsertUser(c echo.Context) error {
-	u := new(model.UserinfoJSON)
-	if err := c.Bind(u); err != nil {
+//	Post
+
+//func InsertUser(c echo.Context) error {
+//	u := new(model.UserinfoJSON)
+//	if err := c.Bind(u); err != nil {
+//		return err
+//	}
+//
+//	sess.InsertInto("user").Columns("id", "email", "first_name", "last_name").Values(u.ID, u.Email, u.Firstname, u.Lastname).Exec()
+//
+//	return c.NoContent(http.StatusOK)
+//}
+
+
+func PostLikes(c echo.Context) error {
+	like := new(model.LikesRequest)
+	if err := c.Bind(like); err != nil {
 		return err
 	}
+	_, err = sess.InsertInto("instagram.like").Columns("media_id", "user_id").Values(like.MediaID, like.UserID).Exec()
 
-	sess.InsertInto("user").Columns("id", "email", "first_name", "last_name").Values(u.ID, u.Email, u.Firstname, u.Lastname).Exec()
+	if err != nil{
+		return c.JSON(http.StatusBadRequest,err)
+	}
 
-	return c.NoContent(http.StatusOK)
+	return c.JSON(http.StatusOK,"ok")
 }
