@@ -34,14 +34,18 @@ type (
 		CreatedTime string	`json:"created_time"`
 		Picture     string	`json:"img_path"`
 		Body        string	`json:"caption"`
-		LikeCount int64 `json:"like_count"`
-		User []UserResponse `json:"user"`
+		User UserResponse `json:"user"`
 		LikeCounts int `json:"like_counts"`
 		IsLiked bool `json:"is_liked"`
 	}
 
+	FollowStatusResponse struct {
+		OutgoingStatus string `json:"outgoing_status"`
+		IncomingStatus string `json:"incoming_status"`
+	}
+
 	LikesResponse struct {
-		Counts int `json:"counts"`
+
 	}
 
 	UserMediaResponse struct {
@@ -50,7 +54,7 @@ type (
 		Picture     string	`json:"img_path"`
 		Body        string	`json:"caption"`
 		LikeCount int64 `json:"like_count"`
-		User []UserResponse `json:"user"`
+		User UserResponse `json:"user"`
 		LikeCounts int `json:"like_counts"`
 		IsLiked bool `json:"is_liked"`
 	}

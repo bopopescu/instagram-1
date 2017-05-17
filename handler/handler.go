@@ -92,7 +92,7 @@ func GetTimeline(c echo.Context) error {
 		}
 	}
 	for key, value := range timeline {
-		var user []model.UserResponse
+		var user model.UserResponse
 		var likes []model.LikesResponse
 		var likeCount = 0
 		var isLiked = 0
@@ -162,7 +162,7 @@ func GetUserMedia(c echo.Context) error {
 	}
 
 	for key, value := range userMedia {
-		var user []model.UserResponse
+		var user model.UserResponse
 		var likes []model.LikesResponse
 		var likeCount = 0
 		var isLiked = 0
