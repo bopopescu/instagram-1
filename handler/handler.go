@@ -10,7 +10,6 @@ import (
 	"github.com/labstack/echo"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gocraft/dbr"
-	"time"
 )
 
 var (
@@ -26,7 +25,7 @@ var (
 func SelectUsers(c echo.Context) error {
 
 	if err != nil {
-		panic(fmt.Errorf("DB connection error: %s \n", err))
+		return c.JSON(http.StatusOK,"DB connection error")
 	}
 
 	var u []model.UserResponse
@@ -42,12 +41,12 @@ func SelectUsers(c echo.Context) error {
 func GetTimeline(c echo.Context) error {
 
 	if err != nil {
-		panic(fmt.Errorf("DB connection error: %s \n", err))
+		return c.JSON(http.StatusOK,"DB connection error")
 	}
+
 	var id int64
 	param := c.Param("id")
 	date := c.Param("date")
-	fmt.Println("date", date)
 	id, err = strconv.ParseInt(param, 0, 64)
 
 	var timeline []model.TimelineResponse
@@ -58,7 +57,6 @@ func GetTimeline(c echo.Context) error {
 			Where("f.my_id = ? AND m.created_time < ?", id, date).
 			OrderDir("m.created_time", false).
 			Limit(10).Load(&timeline)
-		fmt.Println("timeline", timeline)
 		if count == 0 {
 			return c.JSON(http.StatusOK, "表示するタイムラインがありません")
 		}
@@ -82,8 +80,6 @@ func GetTimeline(c echo.Context) error {
 		_, err = sess.Select("u.*").From(dbr.I("user").As("u")).
 			Join(dbr.I("media").As("m"), "u.user_id = m.user_id").Where("u.user_id = ? AND m.media_id = ?", value.UserID, value.MediaID).Load(&user)
 
-
-
 		likeCount, err = sess.Select("*").From(dbr.I("media").As("m")).
 			Join(dbr.I("like").As("l"), "l.media_id = m.media_id").Where("l.media_id = ?", value.MediaID).Load(&likes)
 
@@ -93,7 +89,6 @@ func GetTimeline(c echo.Context) error {
 
 		value.LikeCounts = likeCount
 		value.User = user
-		fmt.Println("user", time.Now())
 		if isLiked > 0 {
 			value.IsLiked = true
 		}
@@ -109,6 +104,73 @@ func GetTimeline(c echo.Context) error {
 		return c.JSON(http.StatusOK, timeline)
 	}
 
+}
+
+func GetUserMedia(c echo.Context) error {
+
+	if err != nil {
+		return c.JSON(http.StatusOK,"DB connection error")
+	}
+
+	var userId int64
+	param := c.Param("id")
+	date := c.Param("date")
+	userId, err = strconv.ParseInt(param, 0, 64)
+
+	var userMedia []model.UserMediaResponse
+
+	if date != "" {
+
+		count, _ := sess.Select("m.media_id", "m.created_time", "m.picture", "m.body").From(dbr.I("media").As("m")).
+			Where("m.user_id = ? AND m.created_time < ?", userId, date).
+			OrderDir("m.created_time", false).
+			Limit(30).Load(&userMedia)
+		if count == 0 {
+			return c.JSON(http.StatusOK, "表示するフォトライブラリがありません")
+		}
+
+	} else {
+
+		count, _ := sess.Select("m.media_id", "m.created_time", "m.picture", "m.body").From(dbr.I("media").As("m")).
+			Where("m.user_id = ?", userId).
+			OrderDir("m.created_time", false).
+			Limit(30).Load(&userMedia)
+		if count == 0 {
+			return c.JSON(http.StatusOK, "表示するフォトライブラリがありません")
+		}
+
+	}
+
+	for key, value := range userMedia {
+		var user []model.UserResponse
+		var likes []model.LikesResponse
+		var likeCount = 0
+		var isLiked = 0
+
+		_, err = sess.Select("u.*").From(dbr.I("user").As("u")).
+			Where("u.user_id = ?", userId).Load(&user)
+
+		likeCount, err = sess.Select("*").From(dbr.I("media").As("m")).
+			Join(dbr.I("like").As("l"), "l.media_id = m.media_id").Where("l.media_id = ?", value.MediaID).Load(&likes)
+
+		isLiked, err = sess.Select("*").From(dbr.I("media").As("m")).
+			Join(dbr.I("like").As("l"), "l.media_id = m.media_id").Where("l.media_id = ? AND l.user_id = ?", value.MediaID, userId).Load(&likes)
+
+		value.User = user
+		value.LikeCounts = likeCount
+		if isLiked > 0 {
+			value.IsLiked = true
+		}
+
+		userMedia[key] = value
+
+	}
+	if err != nil {
+		fmt.Println(err.Error())
+		return c.JSON(http.StatusOK, err.Error())
+	} else {
+		return c.JSON(http.StatusOK, userMedia)
+	}
 }
 
 func InsertUser(c echo.Context) error {

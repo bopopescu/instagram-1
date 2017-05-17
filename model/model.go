@@ -44,6 +44,17 @@ type (
 		Counts int `json:"counts"`
 	}
 
+	UserMediaResponse struct {
+		MediaID     int64	`json:"id"`
+		CreatedTime string	`json:"created_time"`
+		Picture     string	`json:"img_path"`
+		Body        string	`json:"caption"`
+		LikeCount int64 `json:"like_count"`
+		User []UserResponse `json:"user"`
+		LikeCounts int `json:"like_counts"`
+		IsLiked bool `json:"is_liked"`
+	}
+
 	Userinfo struct {
 		ID        int    `db:"id"`
 		Email     string `db:"email"`
