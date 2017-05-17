@@ -22,7 +22,7 @@ var (
 // Handlers
 //----------
 
-func SelectUsers(c echo.Context) error {
+func GetUsers(c echo.Context) error {
 
 	if err != nil {
 		return c.JSON(http.StatusOK,"DB connection error")

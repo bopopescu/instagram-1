@@ -20,9 +20,10 @@ func main() {
 	e.Use(middleware.Recover())
 
 	// Routes
-	e.GET("/users", handler.SelectUsers)
-	e.GET("/user/:id/media", handler.GetUserMedia)
-	e.GET("/user/:id/media/:date", handler.GetUserMedia)
+	e.GET("/users", handler.GetUsers)
+	e.GET("/users/:id", handler.GetUser)
+	e.GET("/users/:id/media", handler.GetUserMedia)
+	e.GET("/users/:id/media/:date", handler.GetUserMedia)
 	e.GET("/timeline/:id", handler.GetTimeline)
 	e.GET("/timeline/:id/:date", handler.GetTimeline)
 
