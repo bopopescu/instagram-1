@@ -78,23 +78,10 @@ type (
 		IsLiked bool `json:"is_liked"`
 	}
 
-	Userinfo struct {
-		ID        int    `db:"id"`
-		Email     string `db:"email"`
-		Firstname string `db:"first_name"`
-		Lastname  string `db:"last_name"`
+	LikesRequest struct {
+		MediaID int `form:"media_id"`
+		UserID int `form:"user_id"`
 	}
 
-	UserinfoJSON struct {
-		ID        int    `json:"id"`
-		Email     string `json:"email"`
-		Firstname string `json:"firstName"`
-		Lastname  string `json:"lastName"`
-	}
 
-	ResponseData struct {
-		//User  []userinfo `json:"users"`
-		Users []UserResponse `json:"user"`
-		Timeline []TimelineResponse `json:"timeline"`
-	}
 )

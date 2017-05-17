@@ -28,7 +28,7 @@ func main() {
 	e.GET("/timeline/:id", handler.GetTimeline)
 	e.GET("/timeline/:id/:date", handler.GetTimeline)
 
-	//e.POST("/users", InsertUser)
+	e.POST("/media/likes", handler.PostLikes)
 
 	// Start server
 	viper.SetDefault("http.port", 1323)
