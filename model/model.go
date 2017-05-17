@@ -28,6 +28,25 @@ type (
 		Password          string    `json:"password"`
 	}
 
+	UserDetailResponse struct {
+		UserID         int64     `json:"id"`
+		FullName       string    `json:"full_name"`
+		UserName       string    `json:"username"`
+		Bio            string    `json:"bio"`
+		Mailaddress    string    `json:"mailaddress"`
+		ProfilePicture string    `json:"profile_picture"`
+		CreatedTime    string 	 `json:"created_time"`
+		PrivateFlg     int64     `json:"private_flg"`
+		Password          string    `json:"password"`
+		Counts CountResponse `json:"counts"`
+	}
+
+	CountResponse struct {
+		Media int `json:"media"`
+		Follows int `json:"follows"`
+		FollowedBy int `json:"followed_by"`
+	}
+
 	TimelineResponse struct {
 		MediaID     int64	`json:"media_id"`
 		UserID      int64	`json:"user_id"`

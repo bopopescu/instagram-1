@@ -47,9 +47,23 @@ func GetUser(c echo.Context) error {
 	var userId int64
 	param := c.Param("id")
 	userId, err = strconv.ParseInt(param, 0, 64)
+	var counts = model.CountResponse{Media:0,Follows:0,FollowedBy:0}
 
-	var u []model.UserResponse
+	var u = model.UserDetailResponse{}
+
+	// ユーザー情報取得
 	_, err = sess.Select("*").From("user").Where("user_id = ?",userId).Load(&u)
+
+	// 投稿数取得
+	_, err = sess.Select("count(*)").From("media").Where("user_id = ?",userId).Load(&counts.Media)
+
+	// フォロー数取得
+	_, err = sess.Select("count(*)").From("follow_list").Where("my_id = ? AND user_id != ?",userId, userId).Load(&counts.Follows)
+
+	// フォロワー数取得
+	_, err = sess.Select("count(*)").From("follow_list").Where("user_id = ? AND my_id != ?",userId, userId).Load(&counts.FollowedBy)
+
+	u.Counts = counts
 	if err != nil {
 		fmt.Println(err.Error())
 		return c.JSON(http.StatusOK, err.Error())
