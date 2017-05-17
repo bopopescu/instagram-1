@@ -79,8 +79,8 @@ type (
 	}
 
 	LikesRequest struct {
-		MediaID int `form:"media_id"`
-		UserID int `form:"user_id"`
+		MediaID int `json:"media_id"`
+		UserID int `json:"user_id"`
 	}
 
 

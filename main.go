@@ -30,6 +30,8 @@ func main() {
 
 	e.POST("/media/likes", handler.PostLikes)
 
+	e.DELETE("/media/likes", handler.DeleteLikes)
+
 	// Start server
 	viper.SetDefault("http.port", 1323)
 	port := fmt.Sprintf(":%d", viper.GetInt("http.port"))
