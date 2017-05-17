@@ -38,6 +38,26 @@ func GetUsers(c echo.Context) error {
 	}
 }
 
+func GetUser(c echo.Context) error {
+
+	if err != nil {
+		return c.JSON(http.StatusOK,"DB connection error")
+	}
+
+	var userId int64
+	param := c.Param("id")
+	userId, err = strconv.ParseInt(param, 0, 64)
+
+	var u []model.UserResponse
+	_, err = sess.Select("*").From("user").Where("user_id = ?",userId).Load(&u)
+	if err != nil {
+		fmt.Println(err.Error())
+		return c.JSON(http.StatusOK, err.Error())
+	} else {
+		return c.JSON(http.StatusOK, u)
+	}
+}
+
 func GetTimeline(c echo.Context) error {
 
 	if err != nil {
