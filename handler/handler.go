@@ -47,14 +47,67 @@ func GetUser(c echo.Context) error {
 	var userId int64
 	param := c.Param("id")
 	userId, err = strconv.ParseInt(param, 0, 64)
+	var counts = model.CountResponse{Media:0,Follows:0,FollowedBy:0}
 
-	var u []model.UserResponse
+	var u = model.UserDetailResponse{}
+
+	// ユーザー情報取得
 	_, err = sess.Select("*").From("user").Where("user_id = ?",userId).Load(&u)
+
+	// 投稿数取得
+	_, err = sess.Select("count(*)").From("media").Where("user_id = ?",userId).Load(&counts.Media)
+
+	// フォロー数取得
+	_, err = sess.Select("count(*)").From("follow_list").Where("my_id = ? AND user_id != ?",userId, userId).Load(&counts.Follows)
+
+	// フォロワー数取得
+	_, err = sess.Select("count(*)").From("follow_list").Where("user_id = ? AND my_id != ?",userId, userId).Load(&counts.FollowedBy)
+
+	u.Counts = counts
 	if err != nil {
 		fmt.Println(err.Error())
 		return c.JSON(http.StatusOK, err.Error())
 	} else {
 		return c.JSON(http.StatusOK, u)
+	}
+}
+
+func GetFollowStatus(c echo.Context) error {
+
+	if err != nil {
+		return c.JSON(http.StatusOK,"DB connection error")
+	}
+
+	var myId int64
+	var opponentId int64
+	param := c.Param("id")
+	param2 := c.Param("id2")
+	myId, err = strconv.ParseInt(param, 0, 64)
+	opponentId, err = strconv.ParseInt(param2, 0, 64)
+
+	var f = model.FollowStatusResponse{OutgoingStatus: "",IncomingStatus: ""}
+
+	followFlg, err := sess.Select("*").From("follow_list").Where("my_id = ? AND user_id = ?",myId,opponentId).Load(&f)
+
+	if followFlg > 0 {
+		f.OutgoingStatus = "follows"
+	} else {
+		f.OutgoingStatus = "none"
+	}
+
+	followerFlg, err := sess.Select("*").From("follow_list").Where("my_id = ? AND user_id = ?",opponentId,myId).Load(&f)
+
+	if followerFlg > 0 {
+		f.IncomingStatus = "follows"
+	} else {
+		f.IncomingStatus = "none"
+	}
+
+	if err != nil {
+		fmt.Println(err.Error())
+		return c.JSON(http.StatusOK, err.Error())
+	} else {
+		return c.JSON(http.StatusOK, f)
 	}
 }
 
@@ -92,7 +145,7 @@ func GetTimeline(c echo.Context) error {
 		}
 	}
 	for key, value := range timeline {
-		var user []model.UserResponse
+		var user model.UserResponse
 		var likes []model.LikesResponse
 		var likeCount = 0
 		var isLiked = 0
@@ -116,7 +169,7 @@ func GetTimeline(c echo.Context) error {
 
 	}
 	fmt.Println("timeline", timeline)
-	//"u.full_name","u.username","u.profile_picture" Where("u.user_id = ?", id)
+	//"u.full_name","u.username"ile_picture" Where("u.user_id = ?", id)
 	if err != nil {
 		fmt.Println(err.Error())
 		return c.JSON(http.StatusOK, err.Error())
@@ -162,7 +215,7 @@ func GetUserMedia(c echo.Context) error {
 	}
 
 	for key, value := range userMedia {
-		var user []model.UserResponse
+		var user model.UserResponse
 		var likes []model.LikesResponse
 		var likeCount = 0
 		var isLiked = 0
