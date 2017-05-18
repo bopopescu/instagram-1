@@ -90,5 +90,9 @@ type (
 		Email string `json:"email"`
 	}
 
+	LoginRequest struct {
+		Username       string    `json:"username"`
+		Password string `json:"password"`
+	}
 
 )
