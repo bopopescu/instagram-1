@@ -19,7 +19,7 @@ type (
 	UserResponse struct {
 		UserID         int64     `json:"id"`
 		FullName       string    `json:"full_name"`
-		UserName       string    `json:"username"`
+		Username       string    `json:"username"`
 		Bio            string    `json:"bio"`
 		Mailaddress    string    `json:"mailaddress"`
 		ProfilePicture string    `json:"profile_picture"`
@@ -31,7 +31,7 @@ type (
 	UserDetailResponse struct {
 		UserID         int64     `json:"id"`
 		FullName       string    `json:"full_name"`
-		UserName       string    `json:"username"`
+		Username       string    `json:"username"`
 		Bio            string    `json:"bio"`
 		Mailaddress    string    `json:"mailaddress"`
 		ProfilePicture string    `json:"profile_picture"`
@@ -81,6 +81,13 @@ type (
 	LikesRequest struct {
 		MediaID int `json:"media_id"`
 		UserID int `json:"user_id"`
+	}
+
+	UserRequest struct {
+		Username       string    `json:"username"`
+		FullName       string    `json:"full_name"`
+		Password string `json:"password"`
+		Email string `json:"email"`
 	}
 
 

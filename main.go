@@ -13,6 +13,7 @@ import (
 	//"github.com/labstack/echo/cookbook/twitter/model"
 )
 
+
 func main() {
 	e := echo.New()
 	// Middleware
@@ -29,6 +30,7 @@ func main() {
 	e.GET("/timeline/:id/:date", handler.GetTimeline)
 
 	e.POST("/media/likes", handler.PostLikes)
+	e.POST("/users", handler.PostUser)
 
 	e.DELETE("/media/likes", handler.DeleteLikes)
 

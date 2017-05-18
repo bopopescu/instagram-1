@@ -10,6 +10,7 @@ import (
 	"github.com/labstack/echo"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gocraft/dbr"
+	"time"
 )
 
 var (
@@ -17,6 +18,8 @@ var (
 	conn, err = db.ConnectDB()
 	sess      = conn.NewSession(nil)
 )
+
+const location = "Asia/Tokyo"
 
 //----------
 // Handlers
@@ -261,8 +264,50 @@ func PostLikes(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest,err)
 	}
 
-	return c.JSON(http.StatusOK,"ok")
+	return c.JSON(http.StatusCreated,"ok")
 }
+
+func PostUser(c echo.Context) error {
+
+	loc, err := time.LoadLocation(location)
+
+	var u = 0
+	var maxId = 0
+	user := new(model.UserRequest)
+	if err := c.Bind(user); err != nil {
+		return err
+	}
+
+	if user.Username == "" || user.Password == "" || user.Email == "" || user.FullName == "" {
+		return c.JSON(http.StatusBadRequest,"必須項目を入力してください。")
+	}
+
+	_, err = sess.Select("count(*)").From("user").Where("username = ?",user.Username).Load(&u)
+
+	if u > 0 {
+		return c.JSON(http.StatusBadRequest,"すでに同じusernameが使われています。")
+	}
+
+	_, err = sess.Select("MAX(user_id)").From("user").Load(&maxId)
+
+	maxId += 1
+
+	_, err = sess.InsertInto("user").
+		Columns("user_id","full_name", "username", "bio", "mailaddress", "profile_picture", "created_time", "private_flg", "password").
+		Values(maxId,user.FullName, user.Username, "よろしくお願いします！", user.Email, "http://storage.googleapis.com/instagram_17/man.png",time.Now().In(loc),0,user.Password).Exec()
+
+	if err != nil{
+		return c.JSON(http.StatusBadRequest,err)
+	}
+
+	_, err = sess.InsertInto("follow_list").Columns("my_id","user_id","created_time").Values(maxId,maxId,time.Now().In(loc)).Exec()
+	if err != nil{
+		return c.JSON(http.StatusBadRequest,err)
+	}
+	return c.JSON(http.StatusCreated,"登録完了")
+}
+
+//	Delete
 
 func DeleteLikes(c echo.Context) error {
 	like := new(model.LikesRequest)
@@ -275,6 +320,6 @@ func DeleteLikes(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest,err)
 	}
 
-	return c.JSON(http.StatusOK,like)
+	return c.JSON(http.StatusNoContent,like)
 }
 
