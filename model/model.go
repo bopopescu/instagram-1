@@ -95,4 +95,9 @@ type (
 		Password string `json:"password"`
 	}
 
+	FollowRequest struct {
+		UserID         int64     `json:"user_id"`
+		RequestedUserID int64 `json:"requested_user_id"`
+	}
+
 )

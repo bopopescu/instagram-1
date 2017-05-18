@@ -341,6 +341,22 @@ func PostLogin(c echo.Context) error {
 	return c.JSON(http.StatusCreated,user)
 }
 
+func PostFollow(c echo.Context) error {
+	loc, err := time.LoadLocation(location)
+	follow := new(model.FollowRequest)
+	if err := c.Bind(follow); err != nil {
+		return err
+	}
+	_, err = sess.InsertInto("follow_list").Columns("my_id", "user_id", "created_time").Values(follow.UserID, follow.RequestedUserID,time.Now().In(loc)).Exec()
+
+	if err != nil{
+		return c.JSON(http.StatusBadRequest,"すでにフォロー済みです。")
+	}
+
+	return c.JSON(http.StatusCreated,"ok")
+}
+
+
 //	Delete
 
 func DeleteLikes(c echo.Context) error {

@@ -32,6 +32,7 @@ func main() {
 	e.POST("/media/likes", handler.PostLikes)
 	e.POST("/users", handler.PostUser)
 	e.POST("/login", handler.PostLogin)
+	e.POST("/users/relationship/follow", handler.PostFollow)
 
 	e.DELETE("/media/likes", handler.DeleteLikes)
 
