@@ -307,6 +307,40 @@ func PostUser(c echo.Context) error {
 	return c.JSON(http.StatusCreated,"登録完了")
 }
 
+func PostLogin(c echo.Context) error {
+
+	login := new(model.LoginRequest)
+	user := new(model.UserDetailResponse)
+	var counts = model.CountResponse{Media:0,Follows:0,FollowedBy:0}
+
+	if err := c.Bind(login); err != nil {
+		return err
+	}
+
+	count, err := sess.Select("*").From("user").Where("username = ? AND password = ?",login.Username, login.Password).Load(&user)
+
+	if count == 0 {
+		return c.JSON(http.StatusBadRequest,"usernameまたはpasswordが間違えています。")
+	}
+
+	// 投稿数取得
+	_, err = sess.Select("count(*)").From("media").Where("user_id = ?",user.UserID).Load(&counts.Media)
+
+	// フォロー数取得
+	_, err = sess.Select("count(*)").From("follow_list").Where("my_id = ? AND user_id != ?",user.UserID, user.UserID).Load(&counts.Follows)
+
+	// フォロワー数取得
+	_, err = sess.Select("count(*)").From("follow_list").Where("user_id = ? AND my_id != ?",user.UserID, user.UserID).Load(&counts.FollowedBy)
+
+	user.Counts = counts
+
+	if err != nil{
+		return c.JSON(http.StatusBadRequest,err)
+	}
+
+	return c.JSON(http.StatusCreated,user)
+}
+
 //	Delete
 
 func DeleteLikes(c echo.Context) error {
