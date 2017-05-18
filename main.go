@@ -35,6 +35,7 @@ func main() {
 	e.POST("/users/relationship/follow", handler.PostFollow)
 
 	e.DELETE("/media/likes", handler.DeleteLikes)
+	e.DELETE("/users/relationship/unfollow", handler.DeleteFollow)
 
 	// Start server
 	viper.SetDefault("http.port", 1323)

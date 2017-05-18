@@ -370,6 +370,18 @@ func DeleteLikes(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest,err)
 	}
 
-	return c.JSON(http.StatusNoContent,like)
+	return c.JSON(http.StatusNoContent,"ok")
+}
+
+func DeleteFollow(c echo.Context) error {
+	follow := new(model.FollowRequest)
+
+	if err := c.Bind(follow); err != nil {
+		return c.JSON(http.StatusBadRequest,"ビルドエラー")
+	}
+
+	_, err = sess.DeleteFrom("follow_list").Where("my_id = ? AND user_id = ?",follow.UserID, follow.RequestedUserID).Exec()
+
+	return c.JSON(http.StatusOK,"ok")
 }
 
