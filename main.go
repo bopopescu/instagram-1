@@ -28,6 +28,7 @@ func main() {
 	e.GET("/users/:id/relationship/:id2", handler.GetFollowStatus)
 	e.GET("/timeline/:id", handler.GetTimeline)
 	e.GET("/timeline/:id/:date", handler.GetTimeline)
+	e.GET("/media/:media_id/users/:user_id", handler.GetMedia)
 
 	e.POST("/media/likes", handler.PostLikes)
 	e.POST("/users", handler.PostUser)
