@@ -388,8 +388,8 @@ func DeleteFollow(c echo.Context) error {
 func PutProfile(c echo.Context) error {
 	//image := new(model.ImageRequest)
 	userId := c.FormValue("user_id")
-	fullName := c.FormValue("user_id")
-	email := c.FormValue("user_id")
+	fullName := c.FormValue("full_name")
+	email := c.FormValue("email")
 	bio := c.FormValue("bio")
 	image,_ := c.FormFile("profile_picture")
 
@@ -417,12 +417,12 @@ func PutProfile(c echo.Context) error {
 
 		content.Write(buf)
 	}
-	err = PutContent("instagram_17","user" + userId + ".jpg", content.Bytes())
+	err = PutContent("instagram_17","user/user" + userId + ".jpg", content.Bytes())
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to upload image")
 	}
 
-	url := "http://storage.googleapis.com/instagram_17/user" + userId +".jpg"
+	url := "http://storage.googleapis.com/instagram_17/user/user" + userId +".jpg"
 	attrsMap := map[string]interface{}{"full_name": fullName, "mailaddress": email, "bio": bio, "profile_picture": url}
 	_, err = sess.Update("user").
 		SetMap(attrsMap).
