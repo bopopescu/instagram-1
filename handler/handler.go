@@ -248,6 +248,53 @@ func GetUserMedia(c echo.Context) error {
 		return c.JSON(http.StatusOK, userMedia)
 	}
 }
+func GetMedia(c echo.Context) error {
+
+	if err != nil {
+		return c.JSON(http.StatusOK,"DB connection error")
+	}
+
+	id1 := c.Param("media_id")
+	id2 := c.Param("user_id")
+	mediaId, err := strconv.ParseInt(id1, 0, 64)
+	userId, err := strconv.ParseInt(id2, 0, 64)
+
+	var userMedia model.TimelineResponse
+
+	count, _ := sess.Select("m.*").From(dbr.I("media").As("m")).
+		Where("m.user_id = ? AND m.media_id = ?", userId,mediaId).Load(&userMedia)
+
+	if count == 0 {
+		return c.JSON(http.StatusOK, "表示するフォトライブラリがありません")
+	}
+
+
+	var user model.UserResponse
+	var likes []model.LikesResponse
+	var likeCount = 0
+	var isLiked = 0
+
+	_, err = sess.Select("u.*").From(dbr.I("user").As("u")).
+		Where("u.user_id = ?", userId).Load(&user)
+
+	likeCount, err = sess.Select("*").From(dbr.I("media").As("m")).
+		Join(dbr.I("like").As("l"), "l.media_id = m.media_id").Where("l.media_id = ?", userMedia.MediaID).Load(&likes)
+
+	isLiked, err = sess.Select("*").From(dbr.I("media").As("m")).
+		Join(dbr.I("like").As("l"), "l.media_id = m.media_id").Where("l.media_id = ? AND l.user_id = ?", userMedia.MediaID, userId).Load(&likes)
+
+	userMedia.User = user
+	userMedia.LikeCounts = likeCount
+
+	if isLiked > 0 {
+		userMedia.IsLiked = true
+	}
+	if err != nil {
+		return c.JSON(http.StatusOK, err.Error())
+	} else {
+		return c.JSON(http.StatusOK, userMedia)
+	}
+}
 
 //	Post
 
