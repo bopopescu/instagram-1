@@ -11,6 +11,9 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gocraft/dbr"
 	"time"
+	"bytes"
+	"cloud.google.com/go/storage"
+	"golang.org/x/net/context"
 )
 
 var (
@@ -36,7 +39,6 @@ func GetUsers(c echo.Context) error {
 	var u []model.UserResponse
 	_, err = sess.Select("*").From("user").Load(&u)
 	if err != nil {
-		fmt.Println(err.Error())
 		return c.JSON(http.StatusOK, err.Error())
 	} else {
 		return c.JSON(http.StatusOK, u)
@@ -70,7 +72,6 @@ func GetUser(c echo.Context) error {
 
 	u.Counts = counts
 	if err != nil {
-		fmt.Println(err.Error())
 		return c.JSON(http.StatusOK, err.Error())
 	} else {
 		return c.JSON(http.StatusOK, u)
@@ -109,7 +110,6 @@ func GetFollowStatus(c echo.Context) error {
 	}
 
 	if err != nil {
-		fmt.Println(err.Error())
 		return c.JSON(http.StatusOK, err.Error())
 	} else {
 		return c.JSON(http.StatusOK, f)
@@ -173,10 +173,8 @@ func GetTimeline(c echo.Context) error {
 		timeline[key] = value
 
 	}
-	fmt.Println("timeline", timeline)
 	//"u.full_name","u.username"ile_picture" Where("u.user_id = ?", id)
 	if err != nil {
-		fmt.Println(err.Error())
 		return c.JSON(http.StatusOK, err.Error())
 	} else {
 		return c.JSON(http.StatusOK, timeline)
@@ -385,3 +383,76 @@ func DeleteFollow(c echo.Context) error {
 	return c.JSON(http.StatusOK,"ok")
 }
 
+//	Put
+
+func PutProfile(c echo.Context) error {
+	//image := new(model.ImageRequest)
+	userId := c.FormValue("user_id")
+	fullName := c.FormValue("user_id")
+	email := c.FormValue("user_id")
+	bio := c.FormValue("bio")
+	image,_ := c.FormFile("profile_picture")
+
+	if userId == "" || fullName == "" || email == "" || bio == ""{
+		return c.JSON(http.StatusBadRequest,"必須項目を入力してください。")
+	}
+
+	src, err := image.Open()
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to open image")
+	}
+	defer src.Close()
+
+	content := new(bytes.Buffer)
+	buf := make([]byte, 1024)
+	for {
+		n, err := src.Read(buf)
+		if n == 0 {
+			break
+		}
+		if err != nil {
+			// Readエラー処理
+			break
+		}
+
+		content.Write(buf)
+	}
+	err = PutContent("instagram_17","user" + userId + ".jpg", content.Bytes())
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to upload image")
+	}
+
+	url := "http://storage.googleapis.com/instagram_17/user" + userId +".jpg"
+	attrsMap := map[string]interface{}{"full_name": fullName, "mailaddress": email, "bio": bio, "profile_picture": url}
+	_, err = sess.Update("user").
+		SetMap(attrsMap).
+		Where("user_id = ?", userId).Exec()
+
+	if err != nil{
+		return c.JSON(http.StatusBadRequest,"必須項目を入力してください。")
+	}
+
+	return c.JSON(http.StatusOK,image)
+}
+
+func PutContent(bucket, path string, data []byte) error {
+	ctx := context.Background()
+	client, err := storage.NewClient(ctx)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	w := client.Bucket(bucket).Object(path).NewWriter(ctx)
+	defer w.Close()
+
+	if n, err := w.Write(data); err != nil {
+		return err
+	} else if n != len(data) {
+		return err
+	}
+	if err := w.Close(); err != nil {
+		return err
+	}
+
+	return nil
+}

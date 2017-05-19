@@ -37,6 +37,8 @@ func main() {
 	e.DELETE("/media/likes", handler.DeleteLikes)
 	e.DELETE("/users/relationship/unfollow", handler.DeleteFollow)
 
+	e.PUT("/users/image", handler.PutProfile)
+
 	// Start server
 	viper.SetDefault("http.port", 1323)
 	port := fmt.Sprintf(":%d", viper.GetInt("http.port"))
