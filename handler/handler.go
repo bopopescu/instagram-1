@@ -296,6 +296,54 @@ func GetMedia(c echo.Context) error {
 	}
 }
 
+func GetFollowList(c echo.Context) error {
+
+	if err != nil {
+		return c.JSON(http.StatusOK,"DB connection error")
+	}
+	var userId int64
+	id := c.Param("id")
+	userId, err := strconv.ParseInt(id, 0, 64)
+
+	if err != nil {
+		return c.JSON(http.StatusOK, err.Error())
+	}
+	followsId := []int64{}
+	var followList []model.FollowsResponse
+	count, err := sess.Select("f.user_id").From(dbr.I("follow_list").As("f")).
+		Where("f.my_id = ?", userId).
+		OrderDir("f.created_time", false).
+		Load(&followsId)
+	if count == 1 {
+		return c.JSON(http.StatusOK, "誰もフォローしていません。")
+	}
+	f0 := func(x int64) bool { return x == userId }
+	reject_map(f0, followsId)
+
+	for key := range followsId {
+		_, err := sess.Select("user_id","username","profile_picture","full_name").From(dbr.I("user")).
+			Where("user_id = ?", followsId[key]).
+			Load(&followList)
+		if err != nil {
+			return c.JSON(http.StatusOK, err.Error())
+		}
+	}
+	return c.JSON(http.StatusOK,followList)
+
+}
+
+// 配列から特定の値を抜き取る
+func reject_map(f func(s int64) bool, s []int64) []int64 {
+	ans := make([]int64, 0)
+
+	for _, x := range s {
+		if f(x) == false {
+			ans = append(ans, x)
+		}
+	}
+	return ans
+}
+
 //	Post
 
 func PostLikes(c echo.Context) error {
