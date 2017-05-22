@@ -487,6 +487,92 @@ func PostFollow(c echo.Context) error {
 	return c.JSON(http.StatusCreated,"ok")
 }
 
+func PostMedia(c echo.Context) error {
+
+	loc, err := time.LoadLocation(location)
+	userId := c.FormValue("user_id")
+	caption := c.FormValue("caption")
+	image,_ := c.FormFile("image")
+
+	if userId == "" || caption == ""{
+		return c.JSON(http.StatusBadRequest,"必須項目を入力してください。")
+	}
+
+	src, err := image.Open()
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to open image")
+	}
+	defer src.Close()
+
+	content := new(bytes.Buffer)
+	buf := make([]byte, 1024)
+	for {
+		n, err := src.Read(buf)
+		if n == 0 {
+			break
+		}
+		if err != nil {
+			// Readエラー処理
+			break
+		}
+
+		content.Write(buf)
+	}
+
+	var mediaId int
+	_, err = sess.Select("MAX(media_id)").From(dbr.I("media")).Load(&mediaId)
+	mediaId += 1
+
+	err = PutContent("instagram_17","media/" + strconv.Itoa(mediaId) + ".jpg", content.Bytes())
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to upload image")
+	}
+
+	url := "http://storage.googleapis.com/instagram_17/media/" + strconv.Itoa(mediaId) +".jpg"
+
+	_, err = sess.InsertInto("media").
+		Columns("media_id","user_id","created_time","picture","body").
+		Values(mediaId,userId,time.Now().In(loc),url,caption).
+		Exec()
+
+	if err != nil{
+		return c.JSON(http.StatusBadRequest,"必須項目を入力してください。")
+	}
+
+	var userMedia model.UserMediaResponse
+	var user model.UserResponse
+	var likes []model.LikesResponse
+	var likeCount = 0
+	var isLiked = 0
+
+	count, _ := sess.Select("m.*").From(dbr.I("media").As("m")).
+		Where("m.media_id = ?", mediaId).Load(&userMedia)
+
+	if count == 0 {
+		return c.JSON(http.StatusOK, "表示する投稿はありません")
+	}
+	_, err = sess.Select("u.*").From(dbr.I("user").As("u")).
+		Where("u.user_id = ?", userId).Load(&user)
+
+	likeCount, err = sess.Select("*").From(dbr.I("media").As("m")).
+		Join(dbr.I("like").As("l"), "l.media_id = m.media_id").Where("l.media_id = ?", userMedia.MediaID).Load(&likes)
+
+	isLiked, err = sess.Select("*").From(dbr.I("media").As("m")).
+		Join(dbr.I("like").As("l"), "l.media_id = m.media_id").Where("l.media_id = ? AND l.user_id = ?", userMedia.MediaID, userId).Load(&likes)
+
+	userMedia.User = user
+	userMedia.LikeCounts = likeCount
+
+	if isLiked > 0 {
+		userMedia.IsLiked = true
+	}
+	if err != nil {
+		return c.JSON(http.StatusOK, err.Error())
+	} else {
+		return c.JSON(http.StatusOK, userMedia)
+	}
+}
+
 
 //	Delete
 
