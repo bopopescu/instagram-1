@@ -69,6 +69,13 @@ type (
 
 	}
 
+	FollowsResponse struct {
+		UserID int64 `json:"user_id"`
+		Username string `json:"username"`
+		ProfilePicture string `json:"profile_picture"`
+		FullName string `json:"full_name"`
+	}
+
 	UserMediaResponse struct {
 		MediaID     int64	`json:"id"`
 		CreatedTime string	`json:"created_time"`
