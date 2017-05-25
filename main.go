@@ -34,6 +34,8 @@ func main() {
 	e.GET("/media/:media_id/users/:user_id", handler.GetMedia)
 	e.GET("/users/:id/follows", handler.GetFollowList)
 	e.GET("/users/:id/followed-by", handler.GetFollowerList)
+	e.GET("/users/search/:data", handler.GetUsersSearch)
+	e.GET("/users/search/", handler.GetUsersSearchNG)
 
 	e.POST("/media/likes", handler.PostLikes)
 	e.POST("/users", handler.PostUser)
