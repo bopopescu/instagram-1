@@ -340,6 +340,35 @@ func GetFollowerList(c echo.Context) error {
 
 }
 
+func GetUsersSearch(c echo.Context) error {
+
+	data := c.Param("data")
+
+	fmt.Printf(data+"aa")
+
+	var userList []model.UserResponse
+	count, Err := sess.Select("*").From(dbr.I("user")).
+		Where("username LIKE '" + data + "%'").
+		OrderDir("created_time", false).
+		Load(&userList)
+
+	if Err != nil {
+		return c.JSON(http.StatusOK, Err.Error())
+	}
+
+	if count == 0 {
+		return c.JSON(http.StatusOK, "アカウントが見つかりませんでした")
+	}
+
+	return c.JSON(http.StatusOK,userList)
+
+}
+func GetUsersSearchNG(c echo.Context) error {
+
+	return c.JSON(http.StatusOK,"検索文字を入力してください。")
+
+}
+
 // 配列から特定の値を抜き取る
 func reject_map(f func(s int64) bool, s []int64) []int64 {
 	ans := make([]int64, 0)
