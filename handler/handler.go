@@ -18,7 +18,7 @@ import (
 
 var (
 	seq       = 1
-	conn, err = db.ConnectDB()
+	conn, Err = db.ConnectDB()
 	sess      = conn.NewSession(nil)
 )
 
@@ -32,14 +32,10 @@ const location = "Asia/Tokyo"
 
 func GetUsers(c echo.Context) error {
 
-	if err != nil {
-		return c.JSON(http.StatusOK,"DB connection error")
-	}
-
 	var u []model.UserResponse
-	_, err = sess.Select("*").From("user").Load(&u)
-	if err != nil {
-		return c.JSON(http.StatusOK, err.Error())
+	_, Err := sess.Select("*").From("user").Load(&u)
+	if Err != nil {
+		return c.JSON(http.StatusOK, Err.Error())
 	} else {
 		return c.JSON(http.StatusOK, u)
 	}
@@ -47,32 +43,28 @@ func GetUsers(c echo.Context) error {
 
 func GetUser(c echo.Context) error {
 
-	if err != nil {
-		return c.JSON(http.StatusOK,"DB connection error")
-	}
-
 	var userId int64
 	param := c.Param("id")
-	userId, err = strconv.ParseInt(param, 0, 64)
+	userId, Err = strconv.ParseInt(param, 0, 64)
 	var counts = model.CountResponse{Media:0,Follows:0,FollowedBy:0}
 
 	var u = model.UserDetailResponse{}
 
 	// ユーザー情報取得
-	_, err = sess.Select("*").From("user").Where("user_id = ?",userId).Load(&u)
+	_, Err = sess.Select("*").From("user").Where("user_id = ?",userId).Load(&u)
 
 	// 投稿数取得
-	_, err = sess.Select("count(*)").From("media").Where("user_id = ?",userId).Load(&counts.Media)
+	_, Err = sess.Select("count(*)").From("media").Where("user_id = ?",userId).Load(&counts.Media)
 
 	// フォロー数取得
-	_, err = sess.Select("count(*)").From("follow_list").Where("my_id = ? AND user_id != ?",userId, userId).Load(&counts.Follows)
+	_, Err = sess.Select("count(*)").From("follow_list").Where("my_id = ? AND user_id != ?",userId, userId).Load(&counts.Follows)
 
 	// フォロワー数取得
-	_, err = sess.Select("count(*)").From("follow_list").Where("user_id = ? AND my_id != ?",userId, userId).Load(&counts.FollowedBy)
+	_, Err = sess.Select("count(*)").From("follow_list").Where("user_id = ? AND my_id != ?",userId, userId).Load(&counts.FollowedBy)
 
 	u.Counts = counts
-	if err != nil {
-		return c.JSON(http.StatusOK, err.Error())
+	if Err != nil {
+		return c.JSON(http.StatusOK, Err.Error())
 	} else {
 		return c.JSON(http.StatusOK, u)
 	}
@@ -80,20 +72,16 @@ func GetUser(c echo.Context) error {
 
 func GetFollowStatus(c echo.Context) error {
 
-	if err != nil {
-		return c.JSON(http.StatusOK,"DB connection error")
-	}
-
 	var myId int64
 	var opponentId int64
 	param := c.Param("id")
 	param2 := c.Param("id2")
-	myId, err = strconv.ParseInt(param, 0, 64)
-	opponentId, err = strconv.ParseInt(param2, 0, 64)
+	myId, Err = strconv.ParseInt(param, 0, 64)
+	opponentId, Err = strconv.ParseInt(param2, 0, 64)
 
 	var f = model.FollowStatusResponse{OutgoingStatus: "",IncomingStatus: ""}
 
-	followFlg, err := sess.Select("*").From("follow_list").Where("my_id = ? AND user_id = ?",myId,opponentId).Load(&f)
+	followFlg, Err := sess.Select("*").From("follow_list").Where("my_id = ? AND user_id = ?",myId,opponentId).Load(&f)
 
 	if followFlg > 0 {
 		f.OutgoingStatus = "follows"
@@ -101,7 +89,7 @@ func GetFollowStatus(c echo.Context) error {
 		f.OutgoingStatus = "none"
 	}
 
-	followerFlg, err := sess.Select("*").From("follow_list").Where("my_id = ? AND user_id = ?",opponentId,myId).Load(&f)
+	followerFlg, Err := sess.Select("*").From("follow_list").Where("my_id = ? AND user_id = ?",opponentId,myId).Load(&f)
 
 	if followerFlg > 0 {
 		f.IncomingStatus = "follows"
@@ -109,8 +97,8 @@ func GetFollowStatus(c echo.Context) error {
 		f.IncomingStatus = "none"
 	}
 
-	if err != nil {
-		return c.JSON(http.StatusOK, err.Error())
+	if Err != nil {
+		return c.JSON(http.StatusOK, Err.Error())
 	} else {
 		return c.JSON(http.StatusOK, f)
 	}
@@ -118,14 +106,10 @@ func GetFollowStatus(c echo.Context) error {
 
 func GetTimeline(c echo.Context) error {
 
-	if err != nil {
-		return c.JSON(http.StatusOK,"DB connection error")
-	}
-
 	var id int64
 	param := c.Param("id")
 	date := c.Param("date")
-	id, err = strconv.ParseInt(param, 0, 64)
+	id, Err = strconv.ParseInt(param, 0, 64)
 
 	var timeline []model.TimelineResponse
 
@@ -155,13 +139,13 @@ func GetTimeline(c echo.Context) error {
 		var likeCount = 0
 		var isLiked = 0
 
-		_, err = sess.Select("u.*").From(dbr.I("user").As("u")).
+		_, Err = sess.Select("u.*").From(dbr.I("user").As("u")).
 			Join(dbr.I("media").As("m"), "u.user_id = m.user_id").Where("u.user_id = ? AND m.media_id = ?", value.UserID, value.MediaID).Load(&user)
 
-		likeCount, err = sess.Select("*").From(dbr.I("media").As("m")).
+		likeCount, Err = sess.Select("*").From(dbr.I("media").As("m")).
 			Join(dbr.I("like").As("l"), "l.media_id = m.media_id").Where("l.media_id = ?", value.MediaID).Load(&likes)
 
-		isLiked, err = sess.Select("*").From(dbr.I("media").As("m")).
+		isLiked, Err = sess.Select("*").From(dbr.I("media").As("m")).
 			Join(dbr.I("like").As("l"), "l.media_id = m.media_id").Where("l.media_id = ? AND l.user_id = ?", value.MediaID, id).Load(&likes)
 
 
@@ -174,8 +158,8 @@ func GetTimeline(c echo.Context) error {
 
 	}
 	//"u.full_name","u.username"ile_picture" Where("u.user_id = ?", id)
-	if err != nil {
-		return c.JSON(http.StatusOK, err.Error())
+	if Err != nil {
+		return c.JSON(http.StatusOK, Err.Error())
 	} else {
 		return c.JSON(http.StatusOK, timeline)
 	}
@@ -184,14 +168,10 @@ func GetTimeline(c echo.Context) error {
 
 func GetUserMedia(c echo.Context) error {
 
-	if err != nil {
-		return c.JSON(http.StatusOK,"DB connection error")
-	}
-
 	var userId int64
 	param := c.Param("id")
 	date := c.Param("date")
-	userId, err = strconv.ParseInt(param, 0, 64)
+	userId, Err = strconv.ParseInt(param, 0, 64)
 
 	var userMedia []model.UserMediaResponse
 
@@ -223,13 +203,13 @@ func GetUserMedia(c echo.Context) error {
 		var likeCount = 0
 		var isLiked = 0
 
-		_, err = sess.Select("u.*").From(dbr.I("user").As("u")).
+		_, Err = sess.Select("u.*").From(dbr.I("user").As("u")).
 			Where("u.user_id = ?", userId).Load(&user)
 
-		likeCount, err = sess.Select("*").From(dbr.I("media").As("m")).
+		likeCount, Err = sess.Select("*").From(dbr.I("media").As("m")).
 			Join(dbr.I("like").As("l"), "l.media_id = m.media_id").Where("l.media_id = ?", value.MediaID).Load(&likes)
 
-		isLiked, err = sess.Select("*").From(dbr.I("media").As("m")).
+		isLiked, Err = sess.Select("*").From(dbr.I("media").As("m")).
 			Join(dbr.I("like").As("l"), "l.media_id = m.media_id").Where("l.media_id = ? AND l.user_id = ?", value.MediaID, userId).Load(&likes)
 
 		value.User = user
@@ -241,23 +221,19 @@ func GetUserMedia(c echo.Context) error {
 		userMedia[key] = value
 
 	}
-	if err != nil {
-		fmt.Println(err.Error())
-		return c.JSON(http.StatusOK, err.Error())
+	if Err != nil {
+		fmt.Println(Err.Error())
+		return c.JSON(http.StatusOK, Err.Error())
 	} else {
 		return c.JSON(http.StatusOK, userMedia)
 	}
 }
 func GetMedia(c echo.Context) error {
 
-	if err != nil {
-		return c.JSON(http.StatusOK,"DB connection error")
-	}
-
 	id1 := c.Param("media_id")
 	id2 := c.Param("user_id")
-	mediaId, err := strconv.ParseInt(id1, 0, 64)
-	userId, err := strconv.ParseInt(id2, 0, 64)
+	mediaId, Err := strconv.ParseInt(id1, 0, 64)
+	userId, Err := strconv.ParseInt(id2, 0, 64)
 
 	var userMedia model.TimelineResponse
 
@@ -274,13 +250,13 @@ func GetMedia(c echo.Context) error {
 	var likeCount = 0
 	var isLiked = 0
 
-	_, err = sess.Select("u.*").From(dbr.I("user").As("u")).
+	_, Err = sess.Select("u.*").From(dbr.I("user").As("u")).
 		Where("u.user_id = ?", userId).Load(&user)
 
-	likeCount, err = sess.Select("*").From(dbr.I("media").As("m")).
+	likeCount, Err = sess.Select("*").From(dbr.I("media").As("m")).
 		Join(dbr.I("like").As("l"), "l.media_id = m.media_id").Where("l.media_id = ?", userMedia.MediaID).Load(&likes)
 
-	isLiked, err = sess.Select("*").From(dbr.I("media").As("m")).
+	isLiked, Err = sess.Select("*").From(dbr.I("media").As("m")).
 		Join(dbr.I("like").As("l"), "l.media_id = m.media_id").Where("l.media_id = ? AND l.user_id = ?", userMedia.MediaID, userId).Load(&likes)
 
 	userMedia.User = user
@@ -289,8 +265,8 @@ func GetMedia(c echo.Context) error {
 	if isLiked > 0 {
 		userMedia.IsLiked = true
 	}
-	if err != nil {
-		return c.JSON(http.StatusOK, err.Error())
+	if Err != nil {
+		return c.JSON(http.StatusOK, Err.Error())
 	} else {
 		return c.JSON(http.StatusOK, userMedia)
 	}
@@ -298,19 +274,16 @@ func GetMedia(c echo.Context) error {
 
 func GetFollowList(c echo.Context) error {
 
-	if err != nil {
-		return c.JSON(http.StatusOK,"DB connection error")
-	}
 	var userId int64
 	id := c.Param("id")
-	userId, err := strconv.ParseInt(id, 0, 64)
+	userId, Err := strconv.ParseInt(id, 0, 64)
 
-	if err != nil {
-		return c.JSON(http.StatusOK, err.Error())
+	if Err != nil {
+		return c.JSON(http.StatusOK, Err.Error())
 	}
 	followsId := []int64{}
 	var followList []model.FollowsResponse
-	count, err := sess.Select("f.user_id").From(dbr.I("follow_list").As("f")).
+	count, Err := sess.Select("f.user_id").From(dbr.I("follow_list").As("f")).
 		Where("f.my_id = ?", userId).
 		OrderDir("f.created_time", false).
 		Load(&followsId)
@@ -321,11 +294,11 @@ func GetFollowList(c echo.Context) error {
 	followsId = reject_map(f0, followsId)
 
 	for key := range followsId {
-		_, err := sess.Select("user_id","username","profile_picture","full_name").From(dbr.I("user")).
+		_, Err := sess.Select("user_id","username","profile_picture","full_name").From(dbr.I("user")).
 			Where("user_id = ?", followsId[key]).
 			Load(&followList)
-		if err != nil {
-			return c.JSON(http.StatusOK, err.Error())
+		if Err != nil {
+			return c.JSON(http.StatusOK, Err.Error())
 		}
 	}
 	return c.JSON(http.StatusOK,followList)
@@ -334,19 +307,16 @@ func GetFollowList(c echo.Context) error {
 
 func GetFollowerList(c echo.Context) error {
 
-	if err != nil {
-		return c.JSON(http.StatusOK,"DB connection error")
-	}
 	var userId int64
 	id := c.Param("id")
-	userId, err := strconv.ParseInt(id, 0, 64)
+	userId, Err := strconv.ParseInt(id, 0, 64)
 
-	if err != nil {
-		return c.JSON(http.StatusOK, err.Error())
+	if Err != nil {
+		return c.JSON(http.StatusOK, Err.Error())
 	}
 	followsId := []int64{}
 	var followerList []model.FollowsResponse
-	count, err := sess.Select("f.my_id").From(dbr.I("follow_list").As("f")).
+	count, Err := sess.Select("f.my_id").From(dbr.I("follow_list").As("f")).
 		Where("f.user_id = ?", userId).
 		OrderDir("f.created_time", false).
 		Load(&followsId)
@@ -359,11 +329,11 @@ func GetFollowerList(c echo.Context) error {
 	followsId = reject_map(f0, followsId)
 
 	for key := range followsId {
-		_, err := sess.Select("user_id","username","profile_picture","full_name").From(dbr.I("user")).
+		_, Err := sess.Select("user_id","username","profile_picture","full_name").From(dbr.I("user")).
 			Where("user_id = ?", followsId[key]).
 			Load(&followerList)
-		if err != nil {
-			return c.JSON(http.StatusOK, err.Error())
+		if Err != nil {
+			return c.JSON(http.StatusOK, Err.Error())
 		}
 	}
 	return c.JSON(http.StatusOK,followerList)
@@ -386,13 +356,13 @@ func reject_map(f func(s int64) bool, s []int64) []int64 {
 
 func PostLikes(c echo.Context) error {
 	like := new(model.LikesRequest)
-	if err := c.Bind(like); err != nil {
-		return err
+	if Err := c.Bind(like); Err != nil {
+		return Err
 	}
-	_, err = sess.InsertInto("instagram.like").Columns("media_id", "user_id").Values(like.MediaID, like.UserID).Exec()
+	_, Err = sess.InsertInto("instagram.like").Columns("media_id", "user_id").Values(like.MediaID, like.UserID).Exec()
 
-	if err != nil{
-		return c.JSON(http.StatusBadRequest,err)
+	if Err != nil{
+		return c.JSON(http.StatusBadRequest,Err)
 	}
 
 	return c.JSON(http.StatusCreated,"ok")
@@ -400,40 +370,40 @@ func PostLikes(c echo.Context) error {
 
 func PostUser(c echo.Context) error {
 
-	loc, err := time.LoadLocation(location)
+	loc, Err := time.LoadLocation(location)
 
 	var u = 0
 	var maxId = 0
 	user := new(model.UserRequest)
-	if err := c.Bind(user); err != nil {
-		return err
+	if Err := c.Bind(user); Err != nil {
+		return Err
 	}
 
 	if user.Username == "" || user.Password == "" || user.Email == "" || user.FullName == "" {
 		return c.JSON(http.StatusBadRequest,"必須項目を入力してください。")
 	}
 
-	_, err = sess.Select("count(*)").From("user").Where("username = ?",user.Username).Load(&u)
+	_, Err = sess.Select("count(*)").From("user").Where("username = ?",user.Username).Load(&u)
 
 	if u > 0 {
 		return c.JSON(http.StatusBadRequest,"すでに同じusernameが使われています。")
 	}
 
-	_, err = sess.Select("MAX(user_id)").From("user").Load(&maxId)
+	_, Err = sess.Select("MAX(user_id)").From("user").Load(&maxId)
 
 	maxId += 1
 
-	_, err = sess.InsertInto("user").
+	_, Err = sess.InsertInto("user").
 		Columns("user_id","full_name", "username", "bio", "mailaddress", "profile_picture", "created_time", "private_flg", "password").
 		Values(maxId,user.FullName, user.Username, "よろしくお願いします！", user.Email, "http://storage.googleapis.com/instagram_17/man.png",time.Now().In(loc),0,user.Password).Exec()
 
-	if err != nil{
-		return c.JSON(http.StatusBadRequest,err)
+	if Err != nil{
+		return c.JSON(http.StatusBadRequest,Err)
 	}
 
-	_, err = sess.InsertInto("follow_list").Columns("my_id","user_id","created_time").Values(maxId,maxId,time.Now().In(loc)).Exec()
-	if err != nil{
-		return c.JSON(http.StatusBadRequest,err)
+	_, Err = sess.InsertInto("follow_list").Columns("my_id","user_id","created_time").Values(maxId,maxId,time.Now().In(loc)).Exec()
+	if Err != nil{
+		return c.JSON(http.StatusBadRequest,Err)
 	}
 	return c.JSON(http.StatusCreated,"登録完了")
 }
@@ -444,43 +414,43 @@ func PostLogin(c echo.Context) error {
 	user := new(model.UserDetailResponse)
 	var counts = model.CountResponse{Media:0,Follows:0,FollowedBy:0}
 
-	if err := c.Bind(login); err != nil {
-		return err
+	if Err := c.Bind(login); Err != nil {
+		return Err
 	}
 
-	count, err := sess.Select("*").From("user").Where("username = ? AND password = ?",login.Username, login.Password).Load(&user)
+	count, Err := sess.Select("*").From("user").Where("username = ? AND password = ?",login.Username, login.Password).Load(&user)
 
 	if count == 0 {
 		return c.JSON(http.StatusBadRequest,"usernameまたはpasswordが間違えています。")
 	}
 
 	// 投稿数取得
-	_, err = sess.Select("count(*)").From("media").Where("user_id = ?",user.UserID).Load(&counts.Media)
+	_, Err = sess.Select("count(*)").From("media").Where("user_id = ?",user.UserID).Load(&counts.Media)
 
 	// フォロー数取得
-	_, err = sess.Select("count(*)").From("follow_list").Where("my_id = ? AND user_id != ?",user.UserID, user.UserID).Load(&counts.Follows)
+	_, Err = sess.Select("count(*)").From("follow_list").Where("my_id = ? AND user_id != ?",user.UserID, user.UserID).Load(&counts.Follows)
 
 	// フォロワー数取得
-	_, err = sess.Select("count(*)").From("follow_list").Where("user_id = ? AND my_id != ?",user.UserID, user.UserID).Load(&counts.FollowedBy)
+	_, Err = sess.Select("count(*)").From("follow_list").Where("user_id = ? AND my_id != ?",user.UserID, user.UserID).Load(&counts.FollowedBy)
 
 	user.Counts = counts
 
-	if err != nil{
-		return c.JSON(http.StatusBadRequest,err)
+	if Err != nil{
+		return c.JSON(http.StatusBadRequest,Err)
 	}
 
 	return c.JSON(http.StatusCreated,user)
 }
 
 func PostFollow(c echo.Context) error {
-	loc, err := time.LoadLocation(location)
+	loc, Err := time.LoadLocation(location)
 	follow := new(model.FollowRequest)
-	if err := c.Bind(follow); err != nil {
-		return err
+	if Err := c.Bind(follow); Err != nil {
+		return Err
 	}
-	_, err = sess.InsertInto("follow_list").Columns("my_id", "user_id", "created_time").Values(follow.UserID, follow.RequestedUserID,time.Now().In(loc)).Exec()
+	_, Err = sess.InsertInto("follow_list").Columns("my_id", "user_id", "created_time").Values(follow.UserID, follow.RequestedUserID,time.Now().In(loc)).Exec()
 
-	if err != nil{
+	if Err != nil{
 		return c.JSON(http.StatusBadRequest,"すでにフォロー済みです。")
 	}
 
@@ -489,7 +459,7 @@ func PostFollow(c echo.Context) error {
 
 func PostMedia(c echo.Context) error {
 
-	loc, err := time.LoadLocation(location)
+	loc, Err := time.LoadLocation(location)
 	userId := c.FormValue("user_id")
 	caption := c.FormValue("caption")
 	image,_ := c.FormFile("image")
@@ -498,8 +468,8 @@ func PostMedia(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest,"必須項目を入力してください。")
 	}
 
-	src, err := image.Open()
-	if err != nil {
+	src, Err := image.Open()
+	if Err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to open image")
 	}
 	defer src.Close()
@@ -507,11 +477,11 @@ func PostMedia(c echo.Context) error {
 	content := new(bytes.Buffer)
 	buf := make([]byte, 1024)
 	for {
-		n, err := src.Read(buf)
+		n, Err := src.Read(buf)
 		if n == 0 {
 			break
 		}
-		if err != nil {
+		if Err != nil {
 			// Readエラー処理
 			break
 		}
@@ -519,45 +489,52 @@ func PostMedia(c echo.Context) error {
 		content.Write(buf)
 	}
 
-	var mediaId int
-	_, err = sess.Select("MAX(media_id)").From(dbr.I("media")).Load(&mediaId)
-	mediaId += 1
-
-	err = PutContent("instagram_17","media/" + strconv.Itoa(mediaId) + ".jpg", content.Bytes())
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to upload image")
-	}
-
-	url := "http://storage.googleapis.com/instagram_17/media/" + strconv.Itoa(mediaId) +".jpg"
-
-	_, err = sess.InsertInto("media").
-		Columns("media_id","user_id","created_time","picture","body").
-		Values(mediaId,userId,time.Now().In(loc),url,caption).
+	result, Err := sess.InsertInto("media").
+		Columns("user_id","created_time","body").
+		Values(userId,time.Now().In(loc),caption).
 		Exec()
-
-	if err != nil{
-		return c.JSON(http.StatusBadRequest,"必須項目を入力してください。")
+	fmt.Printf(caption)
+	if Err != nil{
+		return c.JSON(http.StatusBadRequest,Err)
 	}
 
 	var userMedia model.UserMediaResponse
+	if mediaId,Err := result.LastInsertId(); Err == nil {
+		Err = PutContent("instagram_17","media/" + strconv.FormatInt(mediaId,10) + ".jpg", content.Bytes())
+		if Err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to upload image")
+		}
+
+		url := "http://storage.googleapis.com/instagram_17/media/" + strconv.FormatInt(mediaId,10) +".jpg"
+
+		attrsMap := map[string]interface{}{"picture": url}
+		_, Err = sess.Update("media").
+			SetMap(attrsMap).
+			Where("media_id = ?", mediaId).Exec()
+
+		count, _ := sess.Select("m.*").From(dbr.I("media").As("m")).
+			Where("m.media_id = ?", mediaId).Load(&userMedia)
+		if count == 0 {
+			return c.JSON(http.StatusOK, "表示する投稿はありません")
+		}
+
+	}
+
 	var user model.UserResponse
 	var likes []model.LikesResponse
 	var likeCount = 0
 	var isLiked = 0
 
-	count, _ := sess.Select("m.*").From(dbr.I("media").As("m")).
-		Where("m.media_id = ?", mediaId).Load(&userMedia)
 
-	if count == 0 {
-		return c.JSON(http.StatusOK, "表示する投稿はありません")
-	}
-	_, err = sess.Select("u.*").From(dbr.I("user").As("u")).
+
+
+	_, Err = sess.Select("u.*").From(dbr.I("user").As("u")).
 		Where("u.user_id = ?", userId).Load(&user)
 
-	likeCount, err = sess.Select("*").From(dbr.I("media").As("m")).
+	likeCount, Err = sess.Select("*").From(dbr.I("media").As("m")).
 		Join(dbr.I("like").As("l"), "l.media_id = m.media_id").Where("l.media_id = ?", userMedia.MediaID).Load(&likes)
 
-	isLiked, err = sess.Select("*").From(dbr.I("media").As("m")).
+	isLiked, Err = sess.Select("*").From(dbr.I("media").As("m")).
 		Join(dbr.I("like").As("l"), "l.media_id = m.media_id").Where("l.media_id = ? AND l.user_id = ?", userMedia.MediaID, userId).Load(&likes)
 
 	userMedia.User = user
@@ -566,11 +543,16 @@ func PostMedia(c echo.Context) error {
 	if isLiked > 0 {
 		userMedia.IsLiked = true
 	}
-	if err != nil {
-		return c.JSON(http.StatusOK, err.Error())
+
+	if Err != nil{
+		return c.JSON(http.StatusBadRequest,Err)
+	}
+	if Err != nil {
+		return c.JSON(http.StatusOK, Err.Error())
 	} else {
 		return c.JSON(http.StatusOK, userMedia)
 	}
+
 }
 
 
@@ -578,13 +560,13 @@ func PostMedia(c echo.Context) error {
 
 func DeleteLikes(c echo.Context) error {
 	like := new(model.LikesRequest)
-	if err := c.Bind(like); err != nil {
-		return err
+	if Err := c.Bind(like); Err != nil {
+		return Err
 	}
-	_, err = sess.DeleteFrom("instagram.like").Where("media_id = ? AND user_id = ?",like.MediaID,like.UserID).Exec()
+	_, Err = sess.DeleteFrom("instagram.like").Where("media_id = ? AND user_id = ?",like.MediaID,like.UserID).Exec()
 
-	if err != nil{
-		return c.JSON(http.StatusBadRequest,err)
+	if Err != nil{
+		return c.JSON(http.StatusBadRequest,Err)
 	}
 
 	return c.JSON(http.StatusNoContent,"ok")
@@ -593,11 +575,11 @@ func DeleteLikes(c echo.Context) error {
 func DeleteFollow(c echo.Context) error {
 	follow := new(model.FollowRequest)
 
-	if err := c.Bind(follow); err != nil {
+	if Err := c.Bind(follow); Err != nil {
 		return c.JSON(http.StatusBadRequest,"ビルドエラー")
 	}
 
-	_, err = sess.DeleteFrom("follow_list").Where("my_id = ? AND user_id = ?",follow.UserID, follow.RequestedUserID).Exec()
+	_, Err = sess.DeleteFrom("follow_list").Where("my_id = ? AND user_id = ?",follow.UserID, follow.RequestedUserID).Exec()
 
 	return c.JSON(http.StatusOK,"ok")
 }
@@ -605,7 +587,6 @@ func DeleteFollow(c echo.Context) error {
 //	Put
 
 func PutProfile(c echo.Context) error {
-	//image := new(model.ImageRequest)
 	userId := c.FormValue("user_id")
 	fullName := c.FormValue("full_name")
 	email := c.FormValue("email")
@@ -616,8 +597,8 @@ func PutProfile(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest,"必須項目を入力してください。")
 	}
 
-	src, err := image.Open()
-	if err != nil {
+	src, Err := image.Open()
+	if Err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to open image")
 	}
 	defer src.Close()
@@ -625,29 +606,29 @@ func PutProfile(c echo.Context) error {
 	content := new(bytes.Buffer)
 	buf := make([]byte, 1024)
 	for {
-		n, err := src.Read(buf)
+		n, Err := src.Read(buf)
 		if n == 0 {
 			break
 		}
-		if err != nil {
+		if Err != nil {
 			// Readエラー処理
 			break
 		}
 
 		content.Write(buf)
 	}
-	err = PutContent("instagram_17","user/user" + userId + ".jpg", content.Bytes())
-	if err != nil {
+	Err = PutContent("instagram_17","user/user" + userId + ".jpg", content.Bytes())
+	if Err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to upload image")
 	}
 
 	url := "http://storage.googleapis.com/instagram_17/user/user" + userId +".jpg"
 	attrsMap := map[string]interface{}{"full_name": fullName, "mailaddress": email, "bio": bio, "profile_picture": url}
-	_, err = sess.Update("user").
+	_, Err = sess.Update("user").
 		SetMap(attrsMap).
 		Where("user_id = ?", userId).Exec()
 
-	if err != nil{
+	if Err != nil{
 		return c.JSON(http.StatusBadRequest,"必須項目を入力してください。")
 	}
 
@@ -656,21 +637,21 @@ func PutProfile(c echo.Context) error {
 
 func PutContent(bucket, path string, data []byte) error {
 	ctx := context.Background()
-	client, err := storage.NewClient(ctx)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
+	client, Err := storage.NewClient(ctx)
+	if Err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, Err)
 	}
 
 	w := client.Bucket(bucket).Object(path).NewWriter(ctx)
 	defer w.Close()
 
-	if n, err := w.Write(data); err != nil {
-		return err
+	if n, Err := w.Write(data); Err != nil {
+		return Err
 	} else if n != len(data) {
-		return err
+		return Err
 	}
-	if err := w.Close(); err != nil {
-		return err
+	if Err := w.Close(); Err != nil {
+		return Err
 	}
 
 	return nil
