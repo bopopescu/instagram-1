@@ -15,6 +15,9 @@ import (
 
 
 func main() {
+	if handler.Err != nil {
+		panic(handler.Err)
+	}
 	e := echo.New()
 	// Middleware
 	e.Use(middleware.Logger())
