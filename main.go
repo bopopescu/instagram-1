@@ -36,6 +36,7 @@ func main() {
 	e.GET("/users/:id/followed-by", handler.GetFollowerList)
 	e.GET("/users/search/:data", handler.GetUsersSearch)
 	e.GET("/users/search/", handler.GetUsersSearchNG)
+	e.GET("/users/username/:username", handler.GetUsersUsername)
 
 	e.POST("/media/likes", handler.PostLikes)
 	e.POST("/users", handler.PostUser)

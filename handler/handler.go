@@ -369,6 +369,27 @@ func GetUsersSearchNG(c echo.Context) error {
 
 }
 
+func GetUsersUsername(c echo.Context) error {
+
+	username := c.Param("username")
+	fmt.Println(username)
+	var userList []model.UserResponse
+	count, Err := sess.Select("*").From(dbr.I("user")).
+		Where("username = ?", username).
+		Load(&userList)
+
+	if Err != nil {
+		return c.JSON(http.StatusOK, Err.Error())
+	}
+
+	if count == 1 {
+		return c.JSON(http.StatusOK, false)
+	}
+
+	return c.JSON(http.StatusOK,true)
+
+}
+
 // 配列から特定の値を抜き取る
 func reject_map(f func(s int64) bool, s []int64) []int64 {
 	ans := make([]int64, 0)
