@@ -423,7 +423,9 @@ func PostUser(c echo.Context) error {
 	loc, Err := time.LoadLocation(location)
 
 	var u = 0
-	var maxId = 0
+	var maxId int64 = 0
+	userRes := model.UserDetailResponse{UserID:0,FullName:"",Username:"",Bio:"よろしくお願いします！",Mailaddress:"",ProfilePicture:"http://storage.googleapis.com/instagram_17/man.png"}
+	var counts = model.CountResponse{Media:0,Follows:0,FollowedBy:0}
 	user := new(model.UserRequest)
 	if Err := c.Bind(user); Err != nil {
 		return Err
@@ -451,11 +453,24 @@ func PostUser(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest,Err)
 	}
 
+	userRes.UserID = maxId
+	userRes.FullName = user.FullName
+	userRes.Username = user.Username
+	userRes.Mailaddress = user.Email
+	userRes.Password = user.Password
+
 	_, Err = sess.InsertInto("follow_list").Columns("my_id","user_id","created_time").Values(maxId,maxId,time.Now().In(loc)).Exec()
 	if Err != nil{
 		return c.JSON(http.StatusBadRequest,Err)
 	}
-	return c.JSON(http.StatusCreated,"登録完了")
+
+
+	if Err != nil{
+		return c.JSON(http.StatusBadRequest,Err)
+	}
+
+	userRes.Counts = counts
+	return c.JSON(http.StatusCreated,userRes)
 }
 
 func PostLogin(c echo.Context) error {
@@ -543,7 +558,7 @@ func PostMedia(c echo.Context) error {
 		Columns("user_id","created_time","body").
 		Values(userId,time.Now().In(loc),caption).
 		Exec()
-	fmt.Printf(caption)
+	fmt.Println(time.Now().In(loc))
 	if Err != nil{
 		return c.JSON(http.StatusBadRequest,Err)
 	}
